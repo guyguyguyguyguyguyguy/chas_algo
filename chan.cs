@@ -62,15 +62,17 @@ class Chan
       .Select(i => new Point(randNum.Next(Min, Max), randNum.Next(Min, Max)))
       .ToArray();
 
-    Point[] jarvisConvexHull = JarvisWrap(points, points.Length).ToArray();
+    Point[] jarvisConvexHull = JarvisMarch(points, points.Length).ToArray();
     Point[] grahamConvexHull = GrahamScan(points).ToArray();
-    // Point[] convexHull = ChansAlgo().ToArray();
+    Point[] chanConvexHull = optimisedChansAlgo(points, 10).ToArray();
 
     using (System.IO.StreamWriter file = new System.IO.StreamWriter("text.csv"))
     {
           file.Write(string.Join('\n', grahamConvexHull.Select(p => (p.x, p.y))));
           file.Write("\n , \n");
           file.Write(string.Join('\n', jarvisConvexHull.Select(p => (p.x, p.y))));
+          file.Write("\n , \n");
+          file.Write(string.Join('\n', chanConvexHull.Select(p => (p.x, p.y))));
           file.Write("\n , \n");
           file.Write(string.Join('\n', points.Select(p => (p.x, p.y))));
     }
@@ -133,7 +135,7 @@ class Chan
       return (val > 0) ? 1 : 2; // clock or counterclock wise
   }
 
-  private static List<Point> JarvisWrap(Point[] points, int n)
+  private static List<Point> JarvisMarch(Point[] points, int n)
   {
       if (n < 3) return new List<Point>();
 
@@ -165,25 +167,79 @@ class Chan
 
       return hull;
   }
-        
 
-  private static List<Point> ChansAlgo(Point[] points, int m)
+  private static Point AltJarvisMarch(Point point, Point[] points, Point prevPoint )
   {
-    int k = points.Length/m;
-    List<List<Point>> chunkConvexHull = new List<List<Point>>();
+    foreach (Point p in points)
+    {
+      if (orientation(prevPoint, point, p) == 2) {
+        return p;
+      }
+    }
+
+    return new Point();
+  }
+
+  private static (List<Point>, bool) ChansAlgo(Point[] points, int m)
+  {
+    // int k = points.Length/m;
+    List<Point> chunkConvexHull = new List<Point>();
     Point[] chunk;
 
     for (int i = 0; i < points.Length; i+=m)
     {
       chunk = new Point[m];
+      Console.WriteLine("before effor");
       Array.Copy(points, i, chunk, 0, m);
+      Console.WriteLine("after effor?");
 
       List<Point> convexChunk = GrahamScan(chunk);
-      chunkConvexHull.Add(convexChunk);
+      chunkConvexHull.AddRange(convexChunk);
     }
 
 
-    return new List<Point>();
+    Point[] miniConvexHull = chunkConvexHull.ToArray();
+    // List<Point> totalConvexHull = JarvisMarch(miniConvexHull, miniConvexHull.Length);
+
+
+    List<Point> totalConvexHull = new List<Point>();
+    Point currPoint = new Point(int.MaxValue, 0);
+    foreach (Point p in chunkConvexHull) 
+    {
+      if (p.x < currPoint.x)
+        currPoint = p;
+    }
+
+    Point prevPoint = new Point(int.MinValue, 0);
+    totalConvexHull.Add(currPoint);
+    
+    for (int i = 0; i < m; ++i)
+    {
+      Point convexHullPoint = AltJarvisMarch(prevPoint, miniConvexHull, prevPoint);
+      prevPoint = currPoint;
+      currPoint = convexHullPoint;
+      if (currPoint == totalConvexHull[0]) {
+        return (totalConvexHull, true);
+      } else {
+        totalConvexHull.Add(currPoint);
+      }
+    }
+
+    return (totalConvexHull, false);
+  }
+
+  private static List<Point> optimisedChansAlgo(Point[] points, int m)
+  {
+    List<Point> totalConvexHull = new List<Point>();
+    bool isDone = false;
+    int n = points.Length;
+
+    do {
+      (totalConvexHull, isDone) = ChansAlgo(points, m);
+      m *= m;
+    } while (!isDone);
+
+    return totalConvexHull;
   }
 
   private static float AreaFunc(Point[] points)
