@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
+using System.Linq;
 
 // split each algorithm into its own class for cleanliness
 // QuickHull for higher dimensional data
@@ -187,26 +188,30 @@ class Chan
       return hull;
   }
 
-  private static double orientationNew(Point p, Point q, Point r)
+  private static (double, int) orientationNew(Point p, Point q, Point r)
   {
-      // int val = (q.y - p.y) * (r.x - q.x) -
-      //         (q.x - p.x) * (r.y - q.y);
+    double val = Math.Atan2(q.y - p.y, q.x - p.x) - Math.Atan2(r.y - p.y, r.x - p.x);
 
-      // return val;
-      //
-      double val = Math.Atan2(q.y - p.y, q.x - p.x) - Math.Atan2(r.y - p.y, r.x - p.x);
-      return val;
+    int ori = (q.y - p.y) * (r.x - q.x) -
+            (q.x - p.x) * (r.y - q.y);
+
+    if (ori == 0) return (val, 1); // collinear
+    return (val > 1) ? (val, 1) : (val, 2); // clock or counterclock wise
   }
 
   private static Point AltJarvisMarch(Point point, Point[] points, Point prevPoint)
   {
-    double angle = int.MaxValue;
+    double angle = int.MinValue;
     Point nextP = new Point();
+
+    Console.WriteLine("new jarvis march");
 
     foreach (Point p in points)
     {
-      double newA = orientationNew(point, p, prevPoint);
-      if (newA < angle)
+      Console.WriteLine(p);
+      // Cant turn corners which is a bit wack => So only get half of the convex hull
+      (double newA, int val) = orientationNew(point, p, prevPoint);
+      if (val == 1 && newA > angle)
       {
         angle = newA;
         nextP = p;
@@ -250,6 +255,7 @@ class Chan
 
 
     Point[] miniConvexHull = chunkConvexHull.ToArray();
+    Point[] leftPoints = (Point[])miniConvexHull.Clone();
     // List<Point> totalConvexHull = JarvisMarch(miniConvexHull, miniConvexHull.Length);
 
 
@@ -263,13 +269,16 @@ class Chan
 
     Point prevPoint = new Point(int.MinValue, 0);
     totalConvexHull.Add(currPoint);
+    // leftPoints = leftPoints.Except(new Point[]{currPoint}).ToArray();
 
     for (int i = 0; i < m; ++i)
     {
-      Point convexHullPoint = AltJarvisMarch(currPoint, miniConvexHull, prevPoint);
+      // points = points.where(val => val != currPoint).ToArray();
+      Point convexHullPoint = AltJarvisMarch(currPoint, leftPoints, prevPoint);
       prevPoint = currPoint;
       currPoint = convexHullPoint;
       totalConvexHull.Add(currPoint);
+      leftPoints = leftPoints.Except(new Point[]{currPoint}).ToArray();
       if (currPoint == totalConvexHull[0]) {
         return (sepChunkConvexHull, miniConvexHull, totalConvexHull, true);
       } else {

@@ -46,7 +46,7 @@ for i in range(2, len(dfs) -3):
 # ax3 = chans_df.plot.line(x='x', y='y', style='-', c = 'black', label='chans_algo', linewidth=8, alpha = .5, zorder = 4, ax=ax1)
 # ax4 = mini_df.plot.scatter(x='x', y='y', c="orange", s = 100, zorder = 0, alpha = .5, label='mini', ax=ax1)
 
-print(dfs[-3])
+print(dfs[-3].head(10))
 
 plt.legend()
 plt.show()
