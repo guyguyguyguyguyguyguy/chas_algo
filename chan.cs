@@ -14,13 +14,16 @@ class Chan
   [Serializable]
   struct Point
   {
-    public int x, y;
+    private int _x, _y;
 
     public Point(int a, int b)
     {
-      x = a;
-      y = b;
+      _x = a;
+      _y = b;
     }
+
+    public int x { get { return _x; } }
+    public int y { get { return _y; } }
 
     public static bool operator ==(Point p1, Point p2)
     {
@@ -59,7 +62,13 @@ class Chan
 
   static void Main(string[] args)
   {
-    Random randNum = new Random();
+    int seed = 0;
+    try {
+      Int32.TryParse(Environment.GetCommandLineArgs()[1], out seed);
+    }
+    catch {  }
+
+    Random randNum = new Random(seed);
     int Min = 0;
     int Max = 100;
     Point[] points = Enumerable
@@ -89,7 +98,13 @@ class Chan
           file.Write(string.Join('\n', points.Select(p => (p.x, p.y))));
     }
     
-    // float convexHullArea = AreaFunc(convexHull);
+    // float convexHullArea = AreaFunc(chanConvexHull);
+    // Console.WriteLine(convexHullArea);
+
+    // Return whether chanConvexHull is correct to find edge cases
+    bool isEqual = new HashSet<Point>(grahamConvexHull).SetEquals(chanConvexHull);
+
+    Console.WriteLine(isEqual.ToString().ToLower());
   }
 
   // sort points by x value -> smallest to largest
@@ -230,7 +245,7 @@ class Chan
       m = points.Length;
     }
 
-    Console.WriteLine("m is currently: " + m);
+    // Console.WriteLine("m is currently: " + m);
 
     for (int i = 0; i < points.Length; i+=m)
     {
@@ -309,8 +324,19 @@ class Chan
 
   private static float AreaFunc(Point[] points)
   {
+    float area = 0;
+    int j = points.Length -1;
 
-    return 0.0f;
+    int[] xs = (int[]) points.Select(p => p.x).ToArray();
+    int[] ys = (int[]) points.Select(p => p.y).ToArray();
+    
+    for (int i = 0; i < points.Length; ++i)
+    {
+      area += (xs[j] + xs[i]) * (ys[j] - ys[i]);
+      j = i;
+    }
+
+    return area / 2.0f;
   }
 
   private static void SerialisePoints(Point[] points, Stream s)
