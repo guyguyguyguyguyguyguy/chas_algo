@@ -210,6 +210,7 @@ class Chan
   private static double orientationNew(Point p, Point q, Point r, bool side)
   {
     double val = Math.Atan2(q.y - p.y, q.x - p.x) - Math.Atan2(r.y - p.y, r.x - p.x);
+    // normalise to between -180 and 180, as any angle outside this would suggest point p is not necessary
     val = (val < - Math.PI) ? val += (2*Math.PI) : val;
     
     val = (Math.Abs(val) == Math.PI) ? Math.PI : val;
@@ -328,8 +329,7 @@ class Chan
 
     }
 
-    // if (m == points.Length)
-    if (m == 16)
+    if (m == points.Length)
     {
       return (sepChunkConvexHull, miniConvexHull, totalConvexHull, true);
     }
