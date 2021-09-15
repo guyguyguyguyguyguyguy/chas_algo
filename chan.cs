@@ -105,6 +105,11 @@ class Chan
     bool isEqual = new HashSet<Point>(grahamConvexHull).SetEquals(chanConvexHull);
 
     Console.WriteLine(isEqual.ToString().ToLower());
+
+    // var nonIntersect = chanConvexHull.Except(grahamConvexHull).Union( grahamConvexHull.Except(chanConvexHull) );
+    // Console.WriteLine(string.Join(", ", nonIntersect.Select(p => (p.x, p.y))));
+    // Console.WriteLine(string.Join(", ", grahamConvexHull.Select(p => (p.x, p.y))));
+    // Console.WriteLine(string.Join(", ", chanConvexHull.Select(p => (p.x, p.y))));
   }
 
   // sort points by x value -> smallest to largest
@@ -204,15 +209,15 @@ class Chan
 
   private static double orientationNew(Point p, Point q, Point r, bool side)
   {
-    double val;
-
-    if (!side) {
-      val = Math.Atan2(q.y - p.y, q.x - p.x) - Math.Atan2(r.y - p.y, r.x - p.x);
-    } else {
-      val = Math.Atan2(q.y - p.y, q.x - p.x) - Math.Atan2(r.y - p.y, r.x - p.x);
-      val = (val > Math.PI) ? (val -= 2*Math.PI) : val;
-      val = (val < -Math.PI) ? (val += 2*Math.PI) : val;
-    }
+    double val = Math.Atan2(q.y - p.y, q.x - p.x) - Math.Atan2(r.y - p.y, r.x - p.x);
+    val = (val < - Math.PI) ? val += (2*Math.PI) : val;
+    
+    val = (Math.Abs(val) == Math.PI) ? Math.PI : val;
+    // if (!side) {
+    // } else {
+    // val = (val > Math.PI) ? (val -= 2*Math.PI) : val;
+    // val = (val < -Math.PI) ? (val += 2*Math.PI) : val;
+    //}
 
     return val;
   }
@@ -221,15 +226,32 @@ class Chan
   {
     double angle = int.MinValue;
     Point nextP = new Point();
+    double dist = 0;
+    
+    // hack 
+    Func<Point, Point, float> euclDistNoSqrt = (a, b) => (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
 
     foreach (Point p in points)
     {
-      double newA = orientationNew(point, p, prevPoint, switchSide);
-      if (newA > angle)
+      // Bit of a hack
+      if (p != point && p != prevPoint)
       {
-        angle = newA;
-        nextP = p;
-      }
+        double newA = orientationNew(point, p, prevPoint, switchSide);
+        if (newA > angle) {
+          angle = newA;
+          nextP = p;
+          dist = euclDistNoSqrt(point, p);
+          
+        } 
+        // if two points at same angle, take one further away
+        else if (newA == angle) {
+          double newDist = euclDistNoSqrt(point, p);
+          if (dist < newDist){
+            dist = newDist;
+            nextP = p;
+          }
+        }
+      }    
     }
 
     return nextP;
@@ -265,40 +287,49 @@ class Chan
 
 
     Point[] miniConvexHull = chunkConvexHull.ToArray();
+
+    // if (m == points.Length)
+    // {
+    //   return (sepChunkConvexHull, miniConvexHull, miniConvexHull.ToList(), true);
+    // }
+
     Point[] leftOverPoints = (Point[])miniConvexHull.Clone();
 
     List<Point> totalConvexHull = new List<Point>();
     Point currPoint = new Point(int.MaxValue, 0);
-    Point rightMost = new Point(int.MaxValue, 0);
+    // Point rightMost = new Point(int.MaxValue, 0);
     bool switchSide = false;
     foreach (Point p in chunkConvexHull) 
     {
       if (p.x < currPoint.x)
         currPoint = p;
-      if (p.x > currPoint.x)
-        rightMost = p;
+      // if (p.x > currPoint.x)
+      //  rightMost = p;
     }
 
     Point prevPoint = new Point(int.MinValue, 0);
     totalConvexHull.Add(currPoint);
+    // leftOverPoints = leftOverPoints.Except(new Point[]{currPoint}).ToArray();
 
     for (int i = 0; i < m; ++i)
     {
       Point convexHullPoint = AltJarvisMarch(currPoint, leftOverPoints, prevPoint, switchSide);
       prevPoint = currPoint;
       currPoint = convexHullPoint;
-      if (currPoint == rightMost)
-      {
-        switchSide = true;
-      }
-      totalConvexHull.Add(currPoint);
-      leftOverPoints = leftOverPoints.Except(new Point[]{currPoint}).ToArray();
+      // if (currPoint == rightMost)
+      // {
+      //   switchSide = true;
+      // }
       if (currPoint == totalConvexHull[0]) {
         return (sepChunkConvexHull, miniConvexHull, totalConvexHull, true);
       } else {}
+      totalConvexHull.Add(currPoint);
+      leftOverPoints = leftOverPoints.Except(new Point[]{currPoint}).ToArray();
+
     }
 
-    if (m == points.Length)
+    // if (m == points.Length)
+    if (m == 16)
     {
       return (sepChunkConvexHull, miniConvexHull, totalConvexHull, true);
     }
