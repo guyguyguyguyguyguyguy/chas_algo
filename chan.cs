@@ -70,9 +70,9 @@ class Chan
 
     Random randNum = new Random(seed);
     int Min = 0;
-    int Max = 100;
+    int Max = 10000;
     Point[] points = Enumerable
-      .Repeat(0, 100)
+      .Repeat(0, 10000)
       .Select(i => new Point(randNum.Next(Min, Max), randNum.Next(Min, Max)))
       .ToArray();
 
@@ -210,15 +210,10 @@ class Chan
   private static double orientationNew(Point p, Point q, Point r, bool side)
   {
     double val = Math.Atan2(q.y - p.y, q.x - p.x) - Math.Atan2(r.y - p.y, r.x - p.x);
-    // normalise to between -180 and 180, as any angle outside this would suggest point p is not necessary
-    val = (val < - Math.PI) ? val += (2*Math.PI) : val;
     
-    val = (Math.Abs(val) == Math.PI) ? Math.PI : val;
-    // if (!side) {
-    // } else {
-    // val = (val > Math.PI) ? (val -= 2*Math.PI) : val;
-    // val = (val < -Math.PI) ? (val += 2*Math.PI) : val;
-    //}
+    // bit of a hack -> but works
+    val = (val < - Math.PI) ? val += (2*Math.PI) : val;
+    val = (Math.Abs(val) == Math.PI/2 ) ? Math.PI/2 : val;
 
     return val;
   }

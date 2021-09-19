@@ -20,14 +20,14 @@ for i in range(1, len(dfs)):
     if i != len(dfs):
         dfs[i] = pd.concat([dfs[i], dfs[i].head(1)], ignore_index=True)
 
-ax1 = dfs[-1].plot.scatter(x='x', y='y', c='DarkBlue', s=20, zorder = 1, label='points')
-ax4 = dfs[-2].plot.scatter(x='x', y='y', c="orange", s = 100, zorder = 0, alpha = .5, label='mini', ax=ax1)
+ax1 = dfs[-1].plot.scatter(x='x', y='y', c='DarkBlue', s=.5, zorder = 1, label='points')
+ax4 = dfs[-2].plot.scatter(x='x', y='y', c="orange", s = 5, zorder = 0, alpha = .5, label='mini', ax=ax1)
 ax2 = dfs[1].plot.line(x='x', y='y', style='-', c = 'gold', label='graham algo', linewidth=2, zorder= 2, ax=ax1)
 # ax3 = dfs[0].plot.line(x='x', y='y', style='-', c = 'green', label='jarvis algo', linewidth=1, zorder = 3,  ax=ax1)
 ax3 = dfs[-3].plot.line(x='x', y='y', style='-', c = 'black', label='chan algo', linewidth=4, alpha =.5, zorder = 3,  ax=ax1)
 
-for i in range(2, len(dfs) -3):
-    ax = dfs[i].plot.line(x='x', y='y', style='-', c = all_colours[i], linewidth=4, alpha =0.3, zorder= 2, label='_nolegend_', ax=ax1)
+ # for i in range(2, len(dfs) -3):
+ #    ax = dfs[i].plot.line(x='x', y='y', style='-', c = all_colours[i], linewidth=4, alpha =0.3, zorder= 2, label='_nolegend_', ax=ax1)
 
 print(dfs[-3].head(len(dfs[-3])))
 
